@@ -1,4 +1,5 @@
-# Image officielle Playwright : Chromium est deja installe
+# Image officielle Playwright : Chromium est deja installe.
+# La version doit correspondre a celle de requirements.txt (playwright==1.49.0).
 FROM mcr.microsoft.com/playwright/python:v1.49.0-jammy
 
 WORKDIR /app
@@ -7,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENV PORT=8080
-# timeout 120s car un rendu PDF prend quelques secondes
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "pdf_generator_playwright:app"]
+# Render fournit la variable PORT : gunicorn DOIT ecouter dessus, sinon le service
+# est injoignable. Forme shell pour que $PORT soit substitue.
+# 1 worker = adapte a 512 MB de RAM (Chromium consomme beaucoup).
+CMD gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 1 --timeout 120 pdf_generator_playwright:app
